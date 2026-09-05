@@ -845,21 +845,19 @@ for parameter in PARAMETER_DATA:
         arah
     )
 
-# Nilai konsentrasi tidak dibuat negatif
-        if x_setelah_deviasi < 0:
-            x_setelah_deviasi = 0
+    # Nilai konsentrasi tidak dibuat negatif
+    if x_setelah_deviasi < 0:
+        x_setelah_deviasi = 0
 
-        q_nilai = hitung_q(
-            parameter,
-            x_setelah_deviasi,
-            wilayah_gambut=wilayah_gambut
-        )
+    q_nilai = hitung_q(
+        parameter,
+        x_setelah_deviasi,
+        wilayah_gambut=wilayah_gambut
+    )
 
-        bobot = PARAMETER_DATA[parameter]["bobot"]
-
-        subtotal = q_nilai * bobot
-
-        total_ika += subtotal
+    bobot = PARAMETER_DATA[parameter]["bobot"]
+    subtotal = q_nilai * bobot
+    total_ika += subtotal
 
         hasil.append({
             "Parameter": parameter,
