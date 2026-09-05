@@ -827,23 +827,20 @@ arah_deviasi = {
     "Fecal Coli": arah_fecal,
 }
    
+# ============================================
+# PERHITUNGAN
+# ============================================
 
+hasil = []
+total_ika = 0
 
-    # --------------------------------------------------------
-    # PERHITUNGAN
-    # --------------------------------------------------------
+for parameter in PARAMETER_DATA:
 
-    hasil = []
+    x_asli = nilai_asli[parameter]
 
-    total_ika = 0
+    deviasi = PARAMETER_DATA[parameter]["deviasi"]
 
-    for parameter in PARAMETER_DATA:
-
-        x_asli = nilai_asli[parameter]
-
-        deviasi = PARAMETER_DATA[parameter]["deviasi"]
-
-        arah = arah_deviasi[parameter]
+    arah = arah_deviasi[parameter]
 
         x_setelah_deviasi = terapkan_deviasi(
             x_asli,
