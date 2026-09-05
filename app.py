@@ -1,7 +1,7 @@
 import streamlit as st
-st.write("VERSI BARU 05 SEPTEMBER 2026")
 import pandas as pd
 import math
+import matplotlib.pyplot as plt
 
 # ============================================================
 # KONFIGURASI HALAMAN
@@ -788,9 +788,9 @@ if st.button(
     use_container_width=True
 ):
 
-    # --------------------------------------------------------
-    # DATA INPUT
-    # --------------------------------------------------------
+    # ========================================================
+    # DATA HASIL UJI
+    # ========================================================
 
     nilai_asli = {
         "pH": ph,
@@ -803,96 +803,194 @@ if st.button(
         "Fecal Coli": fecal,
     }
 
+    # ========================================================
+    # ARAH DEVIASI OTOMATIS
+    # ========================================================
 
-    # --------------------------------------------------------
-    # ARAH DEVIASI
-    # --------------------------------------------------------
-arah_ph = "+"
-arah_do = "+"
-arah_bod = "+"
-arah_no3 = "+"
-arah_cod = "+"
-arah_tp = "+"
-arah_tss = "+"
-arah_fecal = "+"
+    arah_deviasi = {
+        "pH": "+",
+        "BOD": "+",
+        "COD": "+",
+        "TSS": "+",
+        "DO": "+",
+        "NO3-N": "+",
+        "T-P": "+",
+        "Fecal Coli": "+",
+    }
 
-arah_deviasi = {
-    "pH": arah_ph,
-    "BOD": arah_bod,
-    "COD": arah_cod,
-    "TSS": arah_tss,
-    "DO": arah_do,
-    "NO3-N": arah_no3,
-    "T-P": arah_tp,
-    "Fecal Coli": arah_fecal,
-}
-   
-# ============================================
-# PERHITUNGAN
-# ============================================
+    # ========================================================
+    # DATA PERUNTUKAN
+    # ========================================================
 
-hasil = []
-total_ika = 0
+    peruntukan_data = {
+        "pH": "Perairan",
+        "BOD": "Perairan",
+        "COD": "Perairan",
+        "TSS": "Perairan",
+        "DO": "Perairan",
+        "NO3-N": "Perairan",
+        "T-P": "Perairan",
+        "Fecal Coli": "Perairan",
+    }
 
-for parameter in PARAMETER_DATA:
-    x_asli = nilai_asli[parameter]
-    deviasi = PARAMETER_DATA[parameter]["deviasi"]
-    arah = arah_deviasi[parameter]
+    # ========================================================
+    # RUMUS Q
+    # ========================================================
 
-    x_setelah_deviasi = terapkan_deviasi(
-        x_asli,
-        deviasi,
-        arah
+    rumus_data = {
+        "pH": "q_ph / q_ph_gambut",
+        "BOD": "q_bod",
+        "COD": "q_cod",
+        "TSS": "q_tss",
+        "DO": "q_do",
+        "NO3-N": "q_no3",
+        "T-P": "q_tp",
+        "Fecal Coli": "q_fecal_coli",
+    }
+
+    # ========================================================
+    # HASIL TANPA DEVIASI
+    # ========================================================
+
+    hasil_tanpa_deviasi = []
+    total_ika_tanpa_deviasi = 0
+
+    for parameter in PARAMETER_DATA:
+
+        x_asli = nilai_asli[parameter]
+
+        q_nilai = hitung_q(
+            parameter,
+            x_asli,
+            wilayah_gambut=wilayah_gambut
+        )
+
+        bobot = PARAMETER_DATA[parameter]["bobot"]
+
+        subtotal = q_nilai * bobot
+
+        total_ika_tanpa_deviasi += subtotal
+
+        hasil_tanpa_deviasi.append({
+            "Parameter": parameter,
+            "Satuan": PARAMETER_DATA[parameter]["satuan"],
+            "Hasil Uji": round(x_asli, 4),
+            "Peruntukan": peruntukan_data[parameter],
+            "Rumus Q": rumus_data[parameter],
+            "Q-Nilai": round(q_nilai, 2),
+            "Faktor Pembobot (W)": bobot,
+            "Nilai Sub-Total": round(subtotal, 2)
+        })
+
+    total_ika_tanpa_deviasi = batas_q(
+        total_ika_tanpa_deviasi
     )
 
-    # Nilai konsentrasi tidak dibuat negatif
-    if x_setelah_deviasi < 0:
-        x_setelah_deviasi = 0
-
-    q_nilai = hitung_q(
-        parameter,
-        x_setelah_deviasi,
-        wilayah_gambut=wilayah_gambut
+    kategori_tanpa_deviasi = kategori_ika(
+        total_ika_tanpa_deviasi
     )
 
-    bobot = PARAMETER_DATA[parameter]["bobot"]
-    subtotal = q_nilai * bobot
-    total_ika += subtotal
+    # ========================================================
+    # HASIL DENGAN DEVIASI
+    # ========================================================
 
-    hasil.append({
-    "Parameter": parameter,
-    "Satuan": PARAMETER_DATA[parameter]["satuan"],
-    "Hasil Uji (x)": round(x_asli, 4),
-    "Deviasi": round(deviasi, 4),
-    "Arah": arah,
-    "Nilai Setelah Deviasi": round(
-     x_setelah_deviasi,
-     4
-     ),
-     "Q-Nilai": round(q_nilai, 2),
-     "Faktor Pembobot (W)": bobot,
-     "Nilai Sub-Total": round(subtotal, 2)
-    })        
+    hasil_dengan_deviasi = []
+    total_ika_dengan_deviasi = 0
 
+    for parameter in PARAMETER_DATA:
 
-    # --------------------------------------------------------
-    # KATEGORI
-    # --------------------------------------------------------
+        x_asli = nilai_asli[parameter]
 
-    total_ika = batas_q(total_ika)
+        deviasi = PARAMETER_DATA[parameter]["deviasi"]
 
-    kategori = kategori_ika(total_ika)
+        arah = arah_deviasi[parameter]
 
+        # Terapkan deviasi
+        x_setelah_deviasi = terapkan_deviasi(
+            x_asli,
+            deviasi,
+            arah
+        )
 
-    # --------------------------------------------------------
-    # SIMPAN KE SESSION
-    # --------------------------------------------------------
+        # Nilai tidak boleh negatif
+        if x_setelah_deviasi < 0:
+            x_setelah_deviasi = 0
 
-    st.session_state["hasil_ika"] = hasil
-    st.session_state["total_ika"] = total_ika
-    st.session_state["kategori"] = kategori
-    st.session_state["nama_anak_sungai"] = nama_anak_sungai
+        # Hitung Q-Nilai dari hasil setelah deviasi
+        q_nilai = hitung_q(
+            parameter,
+            x_setelah_deviasi,
+            wilayah_gambut=wilayah_gambut
+        )
+
+        # Faktor pembobot
+        bobot = PARAMETER_DATA[parameter]["bobot"]
+
+        # Q-Nilai x Faktor Pembobot
+        subtotal = q_nilai * bobot
+
+        # Sigma Subtotal
+        total_ika_dengan_deviasi += subtotal
+
+        hasil_dengan_deviasi.append({
+            "Parameter": parameter,
+            "Satuan": PARAMETER_DATA[parameter]["satuan"],
+            "Hasil Uji Asli": round(x_asli, 4),
+            "Ekv. Deviasi": round(deviasi, 4),
+            "Arah": arah,
+            "Hasil Uji Setelah Deviasi": round(
+                x_setelah_deviasi,
+                4
+            ),
+            "Peruntukan": peruntukan_data[parameter],
+            "Rumus Q": rumus_data[parameter],
+            "Q-Nilai": round(q_nilai, 2),
+            "Faktor Pembobot (W)": bobot,
+            "Nilai Sub-Total": round(subtotal, 2)
+        })
+
+    total_ika_dengan_deviasi = batas_q(
+        total_ika_dengan_deviasi
+    )
+
+    kategori_dengan_deviasi = kategori_ika(
+        total_ika_dengan_deviasi
+    )
+
+    # ========================================================
+    # SIMPAN HASIL
+    # ========================================================
+
+    st.session_state["hasil_tanpa_deviasi"] = (
+        hasil_tanpa_deviasi
+    )
+
+    st.session_state["hasil_dengan_deviasi"] = (
+        hasil_dengan_deviasi
+    )
+
+    st.session_state["total_ika_tanpa_deviasi"] = (
+        total_ika_tanpa_deviasi
+    )
+
+    st.session_state["total_ika_dengan_deviasi"] = (
+        total_ika_dengan_deviasi
+    )
+
+    st.session_state["kategori_tanpa_deviasi"] = (
+        kategori_tanpa_deviasi
+    )
+
+    st.session_state["kategori_dengan_deviasi"] = (
+        kategori_dengan_deviasi
+    )
+
+    st.session_state["nama_anak_sungai"] = (
+        nama_anak_sungai
+    )
+
     st.session_state["titik_pantau"] = titik_pantau
+
     st.session_state["semester"] = semester
 
 
@@ -900,113 +998,260 @@ for parameter in PARAMETER_DATA:
 # TAMPILKAN HASIL
 # ============================================================
 
-if "hasil_ika" in st.session_state:
+if "hasil_tanpa_deviasi" in st.session_state:
 
     st.divider()
 
-    st.header("📋 Ringkasan Data")
+    # ========================================================
+    # RINGKASAN
+    # ========================================================
 
-    st.write(
-        f"**Nama Anak Sungai:** "
-        f"{st.session_state['nama_anak_sungai']}"
+    st.header("📋 Ringkasan Data Pemantauan")
+
+    col_a, col_b, col_c = st.columns(3)
+
+    with col_a:
+        st.write(
+            f"**Nama Anak Sungai:** "
+            f"{st.session_state['nama_anak_sungai']}"
+        )
+
+    with col_b:
+        st.write(
+            f"**Titik Pantau:** "
+            f"{st.session_state['titik_pantau']}"
+        )
+
+    with col_c:
+        st.write(
+            f"**Semester:** "
+            f"{st.session_state['semester']}"
+        )
+
+
+    # ========================================================
+    # DATAFRAME HASIL
+    # ========================================================
+
+    df_tanpa = pd.DataFrame(
+        st.session_state["hasil_tanpa_deviasi"]
     )
 
-    st.write(
-        f"**Titik Pantau:** "
-        f"{st.session_state['titik_pantau']}"
-    )
-
-    st.write(
-        f"**Semester:** "
-        f"{st.session_state['semester']}"
+    df_dengan = pd.DataFrame(
+        st.session_state["hasil_dengan_deviasi"]
     )
 
 
-    # --------------------------------------------------------
-    # TABEL HASIL
-    # --------------------------------------------------------
+    # ========================================================
+    # TABEL 1 - TANPA DEVIASI
+    # ========================================================
 
-    st.header("📊 Hasil Perhitungan IKA")
+    st.divider()
 
-    df_hasil = pd.DataFrame(
-        st.session_state["hasil_ika"]
+    st.header(
+        "📊 Tabel 1. Perhitungan IKA Tanpa Ekvivalen Deviasi"
+    )
+
+    st.caption(
+        "Alur: Hasil Uji → Peruntukan → Rumus Q → "
+        "Q-Nilai → Faktor Pembobot → Nilai Sub-Total"
     )
 
     st.dataframe(
-        df_hasil,
+        df_tanpa,
         use_container_width=True,
         hide_index=True
     )
 
 
-    # --------------------------------------------------------
-    # TOTAL IKA
-    # --------------------------------------------------------
+    # ========================================================
+    # SIGMA DAN IKA TANPA DEVIASI
+    # ========================================================
 
-    total_ika = st.session_state["total_ika"]
+    st.subheader("Σ Subtotal dan IKA Tanpa Deviasi")
 
-    kategori = st.session_state["kategori"]
+    col1, col2 = st.columns(2)
 
-    col_ika1, col_ika2 = st.columns(2)
-
-    with col_ika1:
-
+    with col1:
         st.metric(
-            "TOTAL IKA",
-            f"{total_ika:.2f}"
+            "IKA Tanpa Deviasi",
+            f"{st.session_state['total_ika_tanpa_deviasi']:.2f}"
         )
 
-    with col_ika2:
-
+    with col2:
         st.metric(
-            "KATEGORI",
-            kategori
+            "Kategori Tanpa Deviasi",
+            st.session_state["kategori_tanpa_deviasi"]
         )
 
 
-    # --------------------------------------------------------
-    # STATUS
-    # --------------------------------------------------------
+    # ========================================================
+    # GRAFIK 1 - TANPA DEVIASI
+    # ========================================================
 
-    if kategori == "Sangat Baik":
+    st.subheader(
+        "📈 Grafik 1. Q-Nilai Hasil Uji Tanpa Deviasi"
+    )
 
-        st.success(
-            f"💧 Nilai IKA = {total_ika:.2f} "
-            f"→ Kategori: {kategori}"
+    fig1, ax1 = plt.subplots(figsize=(10, 5))
+
+    ax1.bar(
+        df_tanpa["Parameter"],
+        df_tanpa["Q-Nilai"]
+    )
+
+    ax1.set_xlabel("Parameter")
+
+    ax1.set_ylabel("Q-Nilai")
+
+    ax1.set_title(
+        "Perbandingan Q-Nilai Tanpa Ekvivalen Deviasi"
+    )
+
+    ax1.set_ylim(0, 100)
+
+    plt.xticks(rotation=30)
+
+    st.pyplot(fig1)
+
+    plt.close(fig1)
+
+
+    # ========================================================
+    # TABEL 2 - DENGAN DEVIASI
+    # ========================================================
+
+    st.divider()
+
+    st.header(
+        "📊 Tabel 2. Perhitungan IKA Dengan Ekvivalen Deviasi"
+    )
+
+    st.caption(
+        "Alur: Hasil Uji → Ekvivalen Deviasi → "
+        "Nilai Setelah Deviasi → Peruntukan → Rumus Q → "
+        "Q-Nilai → Q × Faktor Pembobot → Subtotal"
+    )
+
+    st.dataframe(
+        df_dengan,
+        use_container_width=True,
+        hide_index=True
+    )
+
+
+    # ========================================================
+    # SIGMA DAN IKA DENGAN DEVIASI
+    # ========================================================
+
+    st.subheader("Σ Subtotal dan IKA Dengan Deviasi")
+
+    col3, col4 = st.columns(2)
+
+    with col3:
+        st.metric(
+            "IKA Dengan Deviasi",
+            f"{st.session_state['total_ika_dengan_deviasi']:.2f}"
         )
 
-    elif kategori == "Sedang":
-
-        st.warning(
-            f"💧 Nilai IKA = {total_ika:.2f} "
-            f"→ Kategori: {kategori}"
-        )
-
-    else:
-
-        st.error(
-            f"💧 Nilai IKA = {total_ika:.2f} "
-            f"→ Kategori: {kategori}"
+    with col4:
+        st.metric(
+            "Kategori Dengan Deviasi",
+            st.session_state["kategori_dengan_deviasi"]
         )
 
 
-    # --------------------------------------------------------
+    # ========================================================
+    # GRAFIK 2 - DENGAN DEVIASI
+    # ========================================================
+
+    st.subheader(
+        "📈 Grafik 2. Q-Nilai Hasil Uji Setelah Deviasi"
+    )
+
+    fig2, ax2 = plt.subplots(figsize=(10, 5))
+
+    ax2.bar(
+        df_dengan["Parameter"],
+        df_dengan["Q-Nilai"]
+    )
+
+    ax2.set_xlabel("Parameter")
+
+    ax2.set_ylabel("Q-Nilai")
+
+    ax2.set_title(
+        "Perbandingan Q-Nilai Setelah Ekvivalen Deviasi"
+    )
+
+    ax2.set_ylim(0, 100)
+
+    plt.xticks(rotation=30)
+
+    st.pyplot(fig2)
+
+    plt.close(fig2)
+
+
+    # ========================================================
+    # PERBANDINGAN IKA
+    # ========================================================
+
+    st.divider()
+
+    st.header("💧 Perbandingan Hasil IKA")
+
+    perbandingan = pd.DataFrame({
+        "Metode": [
+            "Tanpa Ekvivalen Deviasi",
+            "Dengan Ekvivalen Deviasi"
+        ],
+        "Nilai IKA": [
+            st.session_state["total_ika_tanpa_deviasi"],
+            st.session_state["total_ika_dengan_deviasi"]
+        ],
+        "Kategori": [
+            st.session_state["kategori_tanpa_deviasi"],
+            st.session_state["kategori_dengan_deviasi"]
+        ]
+    })
+
+    st.dataframe(
+        perbandingan,
+        use_container_width=True,
+        hide_index=True
+    )
+
+
+    # ========================================================
     # DOWNLOAD CSV
-    # --------------------------------------------------------
+    # ========================================================
 
-    csv = df_hasil.to_csv(
+    st.divider()
+
+    csv_tanpa = df_tanpa.to_csv(
         index=False
     ).encode("utf-8")
 
     st.download_button(
-        label="⬇️ Download Hasil Perhitungan CSV",
-        data=csv,
-        file_name="hasil_perhitungan_ika_anak_sungai.csv",
+        label="⬇️ Download Tabel Tanpa Deviasi CSV",
+        data=csv_tanpa,
+        file_name="hasil_ika_tanpa_deviasi.csv",
         mime="text/csv",
         use_container_width=True
     )
 
+    csv_dengan = df_dengan.to_csv(
+        index=False
+    ).encode("utf-8")
 
+    st.download_button(
+        label="⬇️ Download Tabel Dengan Deviasi CSV",
+        data=csv_dengan,
+        file_name="hasil_ika_dengan_deviasi.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
 # ============================================================
 # FOOTER
 # ============================================================
