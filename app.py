@@ -845,7 +845,7 @@ for parameter in PARAMETER_DATA:
         arah
     )
 
-        # Nilai konsentrasi tidak dibuat negatif
+# Nilai konsentrasi tidak dibuat negatif
         if x_setelah_deviasi < 0:
             x_setelah_deviasi = 0
 
@@ -874,7 +874,7 @@ for parameter in PARAMETER_DATA:
             "Q-Nilai": round(q_nilai, 2),
             "Faktor Pembobot (W)": bobot,
             "Nilai Sub-Total": round(subtotal, 2)
-        })
+        })        
 
 
     # --------------------------------------------------------
