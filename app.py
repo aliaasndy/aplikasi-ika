@@ -859,20 +859,20 @@ for parameter in PARAMETER_DATA:
     subtotal = q_nilai * bobot
     total_ika += subtotal
 
-        hasil.append({
-            "Parameter": parameter,
-            "Satuan": PARAMETER_DATA[parameter]["satuan"],
-            "Hasil Uji (x)": round(x_asli, 4),
-            "Deviasi": round(deviasi, 4),
-            "Arah": arah,
-            "Nilai Setelah Deviasi": round(
-                x_setelah_deviasi,
-                4
-            ),
-            "Q-Nilai": round(q_nilai, 2),
-            "Faktor Pembobot (W)": bobot,
-            "Nilai Sub-Total": round(subtotal, 2)
-        })        
+    hasil.append({
+    "Parameter": parameter,
+    "Satuan": PARAMETER_DATA[parameter]["satuan"],
+    "Hasil Uji (x)": round(x_asli, 4),
+    "Deviasi": round(deviasi, 4),
+    "Arah": arah,
+    "Nilai Setelah Deviasi": round(
+     x_setelah_deviasi,
+     4
+     ),
+     "Q-Nilai": round(q_nilai, 2),
+     "Faktor Pembobot (W)": bobot,
+     "Nilai Sub-Total": round(subtotal, 2)
+    })        
 
 
     # --------------------------------------------------------
