@@ -807,17 +807,26 @@ if st.button(
     # --------------------------------------------------------
     # ARAH DEVIASI
     # --------------------------------------------------------
+arah_ph = "+"
+arah_do = "+"
+arah_bod = "+"
+arah_no3 = "+"
+arah_cod = "+"
+arah_tp = "+"
+arah_tss = "+"
+arah_fecal = "+"
 
-    arah_deviasi = {
-        "pH": arah_ph,
-        "BOD": arah_bod,
-        "COD": arah_cod,
-        "TSS": arah_tss,
-        "DO": arah_do,
-        "NO3-N": arah_no3,
-        "T-P": arah_tp,
-        "Fecal Coli": arah_fecal,
-    }
+arah_deviasi = {
+    "pH": arah_ph,
+    "BOD": arah_bod,
+    "COD": arah_cod,
+    "TSS": arah_tss,
+    "DO": arah_do,
+    "NO3-N": arah_no3,
+    "T-P": arah_tp,
+    "Fecal Coli": arah_fecal,
+}
+   
 
 
     # --------------------------------------------------------
