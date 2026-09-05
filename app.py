@@ -1335,237 +1335,258 @@ if "hasil_tanpa_deviasi" in st.session_state:
         hide_index=True
     )
 
-# ============================================================
-# HITUNG HASIL GABUNGAN ± DEVIASI
-# ============================================================
+    # ========================================================
+    # HITUNG HASIL GABUNGAN ± DEVIASI
+    # ========================================================
 
-# Gabungan diambil sebagai nilai rata-rata hasil + deviasi
-# dan hasil - deviasi
-total_ika_gabungan = (
-    total_ika_dengan_deviasi
-    + total_ika_minus_deviasi
-) / 2
+    # Gabungan = rata-rata IKA + deviasi dan IKA - deviasi
+    total_ika_gabungan = (
+        st.session_state["total_ika_dengan_deviasi"]
+        + total_ika_minus_deviasi
+    ) / 2
 
-total_ika_gabungan = batas_q(
-    total_ika_gabungan
-)
-
-kategori_gabungan = kategori_ika(
-    total_ika_gabungan
-)
-
-
-# ============================================================
-# RINGKASAN HASIL IKA
-# ============================================================
-
-st.divider()
-
-st.header("💧 Ringkasan Hasil IKA")
-
-df_ringkasan = pd.DataFrame({
-    "Metode": [
-        "Nilai Asli",
-        "Hasil Uji + Deviasi",
-        "Hasil Uji − Deviasi",
-        "Hasil Uji ± Deviasi"
-    ],
-    "Nilai IKA": [
-        round(total_ika_tanpa_deviasi, 2),
-        round(total_ika_dengan_deviasi, 2),
-        round(total_ika_minus_deviasi, 2),
-        round(total_ika_gabungan, 2)
-    ],
-    "Kategori": [
-        kategori_tanpa_deviasi,
-        kategori_dengan_deviasi,
-        kategori_minus_deviasi,
-        kategori_gabungan
-    ]
-})
-
-st.dataframe(
-    df_ringkasan,
-    use_container_width=True,
-    hide_index=True
-)
-
-
-# ============================================================
-# PERBANDINGAN NILAI IKA
-# ============================================================
-
-st.divider()
-
-st.header("📌 Perbandingan Nilai IKA")
-
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    st.metric(
-        "Nilai Asli",
-        f"{total_ika_tanpa_deviasi:.2f}"
+    total_ika_gabungan = batas_q(
+        total_ika_gabungan
     )
 
-with col2:
-    st.metric(
-        "+ Deviasi",
-        f"{total_ika_dengan_deviasi:.2f}"
-    )
-
-with col3:
-    st.metric(
-        "− Deviasi",
-        f"{total_ika_minus_deviasi:.2f}"
-    )
-
-with col4:
-    st.metric(
-        "± Gabungan",
-        f"{total_ika_gabungan:.2f}"
+    kategori_gabungan = kategori_ika(
+        total_ika_gabungan
     )
 
 
-# ============================================================
-# GRAFIK PERBANDINGAN Q-NILAI
-# ============================================================
+    # ========================================================
+    # RINGKASAN HASIL IKA
+    # ========================================================
 
-st.divider()
+    st.divider()
 
-st.header("📈 Perbandingan Q-Nilai")
+    st.header("💧 Ringkasan Hasil IKA")
 
-fig_q, ax_q = plt.subplots(
-    figsize=(12, 6)
-)
+    df_ringkasan = pd.DataFrame({
+        "Metode": [
+            "Nilai Asli",
+            "Hasil Uji + Deviasi",
+            "Hasil Uji − Deviasi",
+            "Hasil Uji ± Deviasi"
+        ],
+        "Nilai IKA": [
+            round(
+                st.session_state["total_ika_tanpa_deviasi"],
+                2
+            ),
+            round(
+                st.session_state["total_ika_dengan_deviasi"],
+                2
+            ),
+            round(
+                total_ika_minus_deviasi,
+                2
+            ),
+            round(
+                total_ika_gabungan,
+                2
+            )
+        ],
+        "Kategori": [
+            st.session_state["kategori_tanpa_deviasi"],
+            st.session_state["kategori_dengan_deviasi"],
+            kategori_minus_deviasi,
+            kategori_gabungan
+        ]
+    })
 
-posisi = range(len(df_gabungan))
-
-lebar = 0.25
-
-ax_q.bar(
-    [x - lebar for x in posisi],
-    df_gabungan["Q-Nilai Asli"],
-    width=lebar,
-    label="Nilai Asli"
-)
-
-ax_q.bar(
-    posisi,
-    df_gabungan["Q-Nilai +"],
-    width=lebar,
-    label="+ Deviasi"
-)
-
-ax_q.bar(
-    [x + lebar for x in posisi],
-    df_gabungan["Q-Nilai −"],
-    width=lebar,
-    label="− Deviasi"
-)
-
-ax_q.set_xticks(
-    list(posisi)
-)
-
-ax_q.set_xticklabels(
-    df_gabungan["Parameter"],
-    rotation=30
-)
-
-ax_q.set_xlabel("Parameter")
-
-ax_q.set_ylabel("Q-Nilai")
-
-ax_q.set_title(
-    "Perbandingan Q-Nilai Nilai Asli, + Deviasi, dan − Deviasi"
-)
-
-ax_q.set_ylim(0, 100)
-
-ax_q.legend()
-
-st.pyplot(fig_q)
-
-plt.close(fig_q)
+    st.dataframe(
+        df_ringkasan,
+        use_container_width=True,
+        hide_index=True
+    )
 
 
-# ============================================================
-# DOWNLOAD CSV
-# ============================================================
+    # ========================================================
+    # PERBANDINGAN NILAI IKA
+    # ========================================================
 
-st.divider()
+    st.divider()
 
-st.header("⬇️ Download Hasil Perhitungan")
+    st.header("📌 Perbandingan Nilai IKA")
 
+    col1, col2, col3, col4 = st.columns(4)
 
-# Download Nilai Asli
-csv_asli = df_asli.to_csv(
-    index=False
-).encode("utf-8")
+    with col1:
+        st.metric(
+            "Nilai Asli",
+            f"{st.session_state['total_ika_tanpa_deviasi']:.2f}"
+        )
 
-st.download_button(
-    label="⬇️ Download Hasil Nilai Asli CSV",
-    data=csv_asli,
-    file_name="hasil_ika_nilai_asli.csv",
-    mime="text/csv",
-    use_container_width=True
-)
+    with col2:
+        st.metric(
+            "+ Deviasi",
+            f"{st.session_state['total_ika_dengan_deviasi']:.2f}"
+        )
 
+    with col3:
+        st.metric(
+            "− Deviasi",
+            f"{total_ika_minus_deviasi:.2f}"
+        )
 
-# Download Hasil + Deviasi
-csv_plus = df_plus.to_csv(
-    index=False
-).encode("utf-8")
-
-st.download_button(
-    label="⬇️ Download Hasil + Deviasi CSV",
-    data=csv_plus,
-    file_name="hasil_ika_plus_deviasi.csv",
-    mime="text/csv",
-    use_container_width=True
-)
+    with col4:
+        st.metric(
+            "± Gabungan",
+            f"{total_ika_gabungan:.2f}"
+        )
 
 
-# Download Hasil - Deviasi
-csv_minus = df_minus.to_csv(
-    index=False
-).encode("utf-8")
+    # ========================================================
+    # GRAFIK PERBANDINGAN Q-NILAI
+    # ========================================================
 
-st.download_button(
-    label="⬇️ Download Hasil − Deviasi CSV",
-    data=csv_minus,
-    file_name="hasil_ika_minus_deviasi.csv",
-    mime="text/csv",
-    use_container_width=True
-)
+    st.divider()
+
+    st.header("📈 Perbandingan Q-Nilai")
+
+    fig_q, ax_q = plt.subplots(
+        figsize=(12, 6)
+    )
+
+    posisi = range(len(df_gabungan))
+    lebar = 0.25
+
+    ax_q.bar(
+        [x - lebar for x in posisi],
+        df_gabungan["Q-Nilai Asli"],
+        width=lebar,
+        label="Nilai Asli"
+    )
+
+    ax_q.bar(
+        posisi,
+        df_gabungan["Q-Nilai +"],
+        width=lebar,
+        label="+ Deviasi"
+    )
+
+    ax_q.bar(
+        [x + lebar for x in posisi],
+        df_gabungan["Q-Nilai −"],
+        width=lebar,
+        label="− Deviasi"
+    )
+
+    ax_q.set_xticks(
+        list(posisi)
+    )
+
+    ax_q.set_xticklabels(
+        df_gabungan["Parameter"],
+        rotation=30
+    )
+
+    ax_q.set_xlabel("Parameter")
+
+    ax_q.set_ylabel("Q-Nilai")
+
+    ax_q.set_title(
+        "Perbandingan Q-Nilai Nilai Asli, + Deviasi, dan − Deviasi"
+    )
+
+    ax_q.set_ylim(0, 100)
+
+    ax_q.legend()
+
+    st.pyplot(fig_q)
+
+    plt.close(fig_q)
 
 
-# Download Tabel Gabungan
-csv_gabungan = df_gabungan.to_csv(
-    index=False
-).encode("utf-8")
+    # ========================================================
+    # DOWNLOAD CSV
+    # ========================================================
 
-st.download_button(
-    label="⬇️ Download Tabel Gabungan CSV",
-    data=csv_gabungan,
-    file_name="hasil_ika_gabungan.csv",
-    mime="text/csv",
-    use_container_width=True
-)
+    st.divider()
+
+    st.header("⬇️ Download Hasil Perhitungan")
 
 
-# Download Ringkasan
-csv_ringkasan = df_ringkasan.to_csv(
-    index=False
-).encode("utf-8")
+    # Download Nilai Asli
+    csv_asli = df_asli.to_csv(
+        index=False
+    ).encode("utf-8")
 
-st.download_button(
-    label="⬇️ Download Ringkasan IKA CSV",
-    data=csv_ringkasan,
-    file_name="ringkasan_ika.csv",
-    mime="text/csv",
-    use_container_width=True
-)
+    st.download_button(
+        label="⬇️ Download Hasil Nilai Asli CSV",
+        data=csv_asli,
+        file_name="hasil_ika_nilai_asli.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
+
+
+    # Download Hasil + Deviasi
+    csv_plus = df_plus.to_csv(
+        index=False
+    ).encode("utf-8")
+
+    st.download_button(
+        label="⬇️ Download Hasil + Deviasi CSV",
+        data=csv_plus,
+        file_name="hasil_ika_plus_deviasi.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
+
+
+    # Download Hasil - Deviasi
+    csv_minus = df_minus.to_csv(
+        index=False
+    ).encode("utf-8")
+
+    st.download_button(
+        label="⬇️ Download Hasil − Deviasi CSV",
+        data=csv_minus,
+        file_name="hasil_ika_minus_deviasi.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
+
+
+    # Download Tabel Gabungan
+    csv_gabungan = df_gabungan.to_csv(
+        index=False
+    ).encode("utf-8")
+
+    st.download_button(
+        label="⬇️ Download Tabel Gabungan CSV",
+        data=csv_gabungan,
+        file_name="hasil_ika_gabungan.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
+
+
+    # Download Ringkasan
+    csv_ringkasan = df_ringkasan.to_csv(
+        index=False
+    ).encode("utf-8")
+
+    st.download_button(
+        label="⬇️ Download Ringkasan IKA CSV",
+        data=csv_ringkasan,
+        file_name="ringkasan_ika.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
+
+
+    # ========================================================
+    # FOOTER
+    # ========================================================
+
+    st.divider()
+
+    st.caption(
+        "Aplikasi Perhitungan Indeks Kualitas Air (IKA) Anak Sungai"
+    )
 # ============================================================
 # FOOTER
 # ============================================================
