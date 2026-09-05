@@ -993,7 +993,6 @@ if st.button(
 
     st.session_state["semester"] = semester
 
-
 # ============================================================
 # TAMPILKAN HASIL
 # ============================================================
@@ -1003,7 +1002,7 @@ if "hasil_tanpa_deviasi" in st.session_state:
     st.divider()
 
     # ========================================================
-    # RINGKASAN
+    # RINGKASAN DATA PEMANTAUAN
     # ========================================================
 
     st.header("📋 Ringkasan Data Pemantauan")
@@ -1030,197 +1029,467 @@ if "hasil_tanpa_deviasi" in st.session_state:
 
 
     # ========================================================
-    # DATAFRAME HASIL
+    # DATA HASIL ASLI DAN HASIL + DEVIASI
     # ========================================================
 
-    df_tanpa = pd.DataFrame(
+    df_asli = pd.DataFrame(
         st.session_state["hasil_tanpa_deviasi"]
     )
 
-    df_dengan = pd.DataFrame(
+    df_plus = pd.DataFrame(
         st.session_state["hasil_dengan_deviasi"]
     )
 
 
     # ========================================================
-    # TABEL 1 - TANPA DEVIASI
+    # MEMBUAT HASIL - DEVIASI
+    # ========================================================
+
+    hasil_minus_deviasi = []
+    total_ika_minus_deviasi = 0
+
+    for _, row in df_asli.iterrows():
+
+        parameter = row["Parameter"]
+
+        x_asli = float(row["Hasil Uji"])
+
+        deviasi = float(
+            PARAMETER_DATA[parameter]["deviasi"]
+        )
+
+        # Hasil Uji - Deviasi
+        x_setelah_minus = x_asli - deviasi
+
+        # Nilai tidak boleh negatif
+        if x_setelah_minus < 0:
+            x_setelah_minus = 0
+
+        # Hitung Q-Nilai
+        q_nilai_minus = hitung_q(
+            parameter,
+            x_setelah_minus,
+            wilayah_gambut=wilayah_gambut
+        )
+
+        # Faktor pembobot
+        bobot = PARAMETER_DATA[parameter]["bobot"]
+
+        # Subtotal
+        subtotal_minus = q_nilai_minus * bobot
+
+        # Total IKA
+        total_ika_minus_deviasi += subtotal_minus
+
+        hasil_minus_deviasi.append({
+
+            "Parameter": parameter,
+
+            "Satuan":
+                PARAMETER_DATA[parameter]["satuan"],
+
+            "Hasil Uji Asli":
+                round(x_asli, 4),
+
+            "Ekv. Deviasi":
+                round(deviasi, 4),
+
+            "Arah":
+                "-",
+
+            "Hasil Uji Setelah Deviasi":
+                round(x_setelah_minus, 4),
+
+            "Peruntukan":
+                row["Peruntukan"],
+
+            "Rumus Q":
+                row["Rumus Q"],
+
+            "Q-Nilai":
+                round(q_nilai_minus, 2),
+
+            "Faktor Pembobot (W)":
+                bobot,
+
+            "Nilai Sub-Total":
+                round(subtotal_minus, 2)
+
+        })
+
+
+    # Batasi total IKA
+    total_ika_minus_deviasi = batas_q(
+        total_ika_minus_deviasi
+    )
+
+    kategori_minus_deviasi = kategori_ika(
+        total_ika_minus_deviasi
+    )
+
+    df_minus = pd.DataFrame(
+        hasil_minus_deviasi
+    )
+
+
+    # ========================================================
+    # TABEL 1 - HASIL UJI ASLI
     # ========================================================
 
     st.divider()
 
     st.header(
-        "📊 Tabel 1. Perhitungan IKA Tanpa Ekvivalen Deviasi"
+        "📊 Tabel 1. Perhitungan IKA Nilai Asli"
     )
 
     st.caption(
-        "Alur: Hasil Uji → Peruntukan → Rumus Q → "
-        "Q-Nilai → Faktor Pembobot → Nilai Sub-Total"
+        "Hasil perhitungan menggunakan nilai hasil uji asli "
+        "tanpa penambahan atau pengurangan ekivalen deviasi."
     )
 
     st.dataframe(
-        df_tanpa,
+        df_asli,
         use_container_width=True,
         hide_index=True
     )
 
 
     # ========================================================
-    # SIGMA DAN IKA TANPA DEVIASI
+    # TOTAL IKA NILAI ASLI
     # ========================================================
 
-    st.subheader("Σ Subtotal dan IKA Tanpa Deviasi")
+    st.subheader("💧 Hasil IKA Nilai Asli")
 
     col1, col2 = st.columns(2)
 
     with col1:
         st.metric(
-            "IKA Tanpa Deviasi",
+            "IKA Nilai Asli",
             f"{st.session_state['total_ika_tanpa_deviasi']:.2f}"
         )
 
     with col2:
         st.metric(
-            "Kategori Tanpa Deviasi",
+            "Kategori",
             st.session_state["kategori_tanpa_deviasi"]
         )
 
 
     # ========================================================
-    # GRAFIK 1 - TANPA DEVIASI
-    # ========================================================
-
-    st.subheader(
-        "📈 Grafik 1. Q-Nilai Hasil Uji Tanpa Deviasi"
-    )
-
-    fig1, ax1 = plt.subplots(figsize=(10, 5))
-
-    ax1.bar(
-        df_tanpa["Parameter"],
-        df_tanpa["Q-Nilai"]
-    )
-
-    ax1.set_xlabel("Parameter")
-
-    ax1.set_ylabel("Q-Nilai")
-
-    ax1.set_title(
-        "Perbandingan Q-Nilai Tanpa Ekvivalen Deviasi"
-    )
-
-    ax1.set_ylim(0, 100)
-
-    plt.xticks(rotation=30)
-
-    st.pyplot(fig1)
-
-    plt.close(fig1)
-
-
-    # ========================================================
-    # TABEL 2 - DENGAN DEVIASI
+    # TABEL 2 - HASIL + DEVIASI
     # ========================================================
 
     st.divider()
 
     st.header(
-        "📊 Tabel 2. Perhitungan IKA Dengan Ekvivalen Deviasi"
+        "📊 Tabel 2. Perhitungan IKA Hasil Uji + Deviasi"
     )
 
     st.caption(
-        "Alur: Hasil Uji → Ekvivalen Deviasi → "
-        "Nilai Setelah Deviasi → Peruntukan → Rumus Q → "
-        "Q-Nilai → Q × Faktor Pembobot → Subtotal"
+        "Hasil uji setelah ditambahkan ekivalen deviasi (+)."
     )
 
     st.dataframe(
-        df_dengan,
+        df_plus,
         use_container_width=True,
         hide_index=True
     )
 
 
     # ========================================================
-    # SIGMA DAN IKA DENGAN DEVIASI
+    # TOTAL IKA + DEVIASI
     # ========================================================
 
-    st.subheader("Σ Subtotal dan IKA Dengan Deviasi")
+    st.subheader("💧 Hasil IKA + Deviasi")
 
     col3, col4 = st.columns(2)
 
     with col3:
         st.metric(
-            "IKA Dengan Deviasi",
+            "IKA + Deviasi",
             f"{st.session_state['total_ika_dengan_deviasi']:.2f}"
         )
 
     with col4:
         st.metric(
-            "Kategori Dengan Deviasi",
+            "Kategori",
             st.session_state["kategori_dengan_deviasi"]
         )
 
 
     # ========================================================
-    # GRAFIK 2 - DENGAN DEVIASI
-    # ========================================================
-
-    st.subheader(
-        "📈 Grafik 2. Q-Nilai Hasil Uji Setelah Deviasi"
-    )
-
-    fig2, ax2 = plt.subplots(figsize=(10, 5))
-
-    ax2.bar(
-        df_dengan["Parameter"],
-        df_dengan["Q-Nilai"]
-    )
-
-    ax2.set_xlabel("Parameter")
-
-    ax2.set_ylabel("Q-Nilai")
-
-    ax2.set_title(
-        "Perbandingan Q-Nilai Setelah Ekvivalen Deviasi"
-    )
-
-    ax2.set_ylim(0, 100)
-
-    plt.xticks(rotation=30)
-
-    st.pyplot(fig2)
-
-    plt.close(fig2)
-
-
-    # ========================================================
-    # PERBANDINGAN IKA
+    # TABEL 3 - HASIL - DEVIASI
     # ========================================================
 
     st.divider()
 
-    st.header("💧 Perbandingan Hasil IKA")
+    st.header(
+        "📊 Tabel 3. Perhitungan IKA Hasil Uji − Deviasi"
+    )
 
-    perbandingan = pd.DataFrame({
-        "Metode": [
-            "Tanpa Ekvivalen Deviasi",
-            "Dengan Ekvivalen Deviasi"
-        ],
-        "Nilai IKA": [
-            st.session_state["total_ika_tanpa_deviasi"],
-            st.session_state["total_ika_dengan_deviasi"]
-        ],
-        "Kategori": [
-            st.session_state["kategori_tanpa_deviasi"],
-            st.session_state["kategori_dengan_deviasi"]
-        ]
-    })
+    st.caption(
+        "Hasil uji setelah dikurangi ekivalen deviasi (−)."
+    )
 
     st.dataframe(
-        perbandingan,
+        df_minus,
         use_container_width=True,
         hide_index=True
     )
+
+
+    # ========================================================
+    # TOTAL IKA - DEVIASI
+    # ========================================================
+
+    st.subheader("💧 Hasil IKA − Deviasi")
+
+    col5, col6 = st.columns(2)
+
+    with col5:
+        st.metric(
+            "IKA − Deviasi",
+            f"{total_ika_minus_deviasi:.2f}"
+        )
+
+    with col6:
+        st.metric(
+            "Kategori",
+            kategori_minus_deviasi
+        )
+
+
+    # ========================================================
+    # TABEL GABUNGAN PER PARAMETER
+    # ========================================================
+
+    st.divider()
+
+    st.header(
+        "📋 Tabel 4. Perbandingan Hasil Asli, + Deviasi, dan − Deviasi"
+    )
+
+    data_gabungan = []
+
+    for parameter in df_asli["Parameter"]:
+
+        asli = df_asli[
+            df_asli["Parameter"] == parameter
+        ].iloc[0]
+
+        plus = df_plus[
+            df_plus["Parameter"] == parameter
+        ].iloc[0]
+
+        minus = df_minus[
+            df_minus["Parameter"] == parameter
+        ].iloc[0]
+
+        data_gabungan.append({
+
+            "Parameter": parameter,
+
+            "Satuan":
+                asli["Satuan"],
+
+            "Hasil Uji Asli":
+                asli["Hasil Uji"],
+
+            "Deviasi":
+                plus["Ekv. Deviasi"],
+
+            "Hasil + Deviasi":
+                plus["Hasil Uji Setelah Deviasi"],
+
+            "Hasil − Deviasi":
+                minus["Hasil Uji Setelah Deviasi"],
+
+            "Q-Nilai Asli":
+                asli["Q-Nilai"],
+
+            "Q-Nilai +":
+                plus["Q-Nilai"],
+
+            "Q-Nilai −":
+                minus["Q-Nilai"],
+
+            "Subtotal Asli":
+                asli["Nilai Sub-Total"],
+
+            "Subtotal +":
+                plus["Nilai Sub-Total"],
+
+            "Subtotal −":
+                minus["Nilai Sub-Total"]
+
+        })
+
+
+    df_gabungan = pd.DataFrame(
+        data_gabungan
+    )
+
+    st.dataframe(
+        df_gabungan,
+        use_container_width=True,
+        hide_index=True
+    )
+
+
+    # ========================================================
+    # RINGKASAN TOTAL IKA
+    # ========================================================
+
+    st.divider()
+
+    st.header("💧 Ringkasan Hasil IKA")
+
+    ringkasan_ika = pd.DataFrame({
+
+        "Metode": [
+
+            "Nilai Asli",
+
+            "Hasil Uji + Deviasi",
+
+            "Hasil Uji − Deviasi"
+
+        ],
+
+        "Nilai IKA": [
+
+            round(
+                st.session_state[
+                    "total_ika_tanpa_deviasi"
+                ],
+                2
+            ),
+
+            round(
+                st.session_state[
+                    "total_ika_dengan_deviasi"
+                ],
+                2
+            ),
+
+            round(
+                total_ika_minus_deviasi,
+                2
+            )
+
+        ],
+
+        "Kategori": [
+
+            st.session_state[
+                "kategori_tanpa_deviasi"
+            ],
+
+            st.session_state[
+                "kategori_dengan_deviasi"
+            ],
+
+            kategori_minus_deviasi
+
+        ]
+
+    })
+
+    st.dataframe(
+        ringkasan_ika,
+        use_container_width=True,
+        hide_index=True
+    )
+
+
+    # ========================================================
+    # TAMPILAN METRIC PERBANDINGAN
+    # ========================================================
+
+    st.subheader("📌 Perbandingan Nilai IKA")
+
+    col_asli, col_plus, col_minus = st.columns(3)
+
+    with col_asli:
+        st.metric(
+            "Nilai Asli",
+            f"{st.session_state['total_ika_tanpa_deviasi']:.2f}"
+        )
+
+    with col_plus:
+        st.metric(
+            "+ Deviasi",
+            f"{st.session_state['total_ika_dengan_deviasi']:.2f}"
+        )
+
+    with col_minus:
+        st.metric(
+            "− Deviasi",
+            f"{total_ika_minus_deviasi:.2f}"
+        )
+
+
+    # ========================================================
+    # GRAFIK PERBANDINGAN Q-NILAI
+    # ========================================================
+
+    st.divider()
+
+    st.header("📈 Perbandingan Q-Nilai")
+
+    fig_q, ax_q = plt.subplots(
+        figsize=(12, 6)
+    )
+
+    posisi = range(len(df_gabungan))
+
+    lebar = 0.25
+
+    ax_q.bar(
+        [x - lebar for x in posisi],
+        df_gabungan["Q-Nilai Asli"],
+        width=lebar,
+        label="Nilai Asli"
+    )
+
+    ax_q.bar(
+        posisi,
+        df_gabungan["Q-Nilai +"],
+        width=lebar,
+        label="+ Deviasi"
+    )
+
+    ax_q.bar(
+        [x + lebar for x in posisi],
+        df_gabungan["Q-Nilai −"],
+        width=lebar,
+        label="− Deviasi"
+    )
+
+    ax_q.set_xticks(
+        list(posisi)
+    )
+
+    ax_q.set_xticklabels(
+        df_gabungan["Parameter"],
+        rotation=30
+    )
+
+    ax_q.set_xlabel("Parameter")
+
+    ax_q.set_ylabel("Q-Nilai")
+
+    ax_q.set_title(
+        "Perbandingan Q-Nilai Asli, + Deviasi, dan − Deviasi"
+    )
+
+    ax_q.set_ylim(0, 100)
+
+    ax_q.legend()
+
+    st.pyplot(fig_q)
+
+    plt.close(fig_q)
 
 
     # ========================================================
@@ -1229,29 +1498,72 @@ if "hasil_tanpa_deviasi" in st.session_state:
 
     st.divider()
 
-    csv_tanpa = df_tanpa.to_csv(
+    st.header("⬇️ Download Hasil Perhitungan")
+
+    csv_asli = df_asli.to_csv(
         index=False
     ).encode("utf-8")
 
     st.download_button(
-        label="⬇️ Download Tabel Tanpa Deviasi CSV",
-        data=csv_tanpa,
-        file_name="hasil_ika_tanpa_deviasi.csv",
+        label="⬇️ Download Hasil Nilai Asli CSV",
+        data=csv_asli,
+        file_name="hasil_ika_nilai_asli.csv",
         mime="text/csv",
         use_container_width=True
     )
 
-    csv_dengan = df_dengan.to_csv(
+
+    csv_plus = df_plus.to_csv(
         index=False
     ).encode("utf-8")
 
     st.download_button(
-        label="⬇️ Download Tabel Dengan Deviasi CSV",
-        data=csv_dengan,
-        file_name="hasil_ika_dengan_deviasi.csv",
+        label="⬇️ Download Hasil + Deviasi CSV",
+        data=csv_plus,
+        file_name="hasil_ika_plus_deviasi.csv",
         mime="text/csv",
         use_container_width=True
     )
+
+
+    csv_minus = df_minus.to_csv(
+        index=False
+    ).encode("utf-8")
+
+    st.download_button(
+        label="⬇️ Download Hasil − Deviasi CSV",
+        data=csv_minus,
+        file_name="hasil_ika_minus_deviasi.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
+
+
+    csv_gabungan = df_gabungan.to_csv(
+        index=False
+    ).encode("utf-8")
+
+    st.download_button(
+        label="⬇️ Download Tabel Gabungan CSV",
+        data=csv_gabungan,
+        file_name="hasil_ika_gabungan.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
+
+
+    csv_ringkasan = ringkasan_ika.to_csv(
+        index=False
+    ).encode("utf-8")
+
+    st.download_button(
+        label="⬇️ Download Ringkasan IKA CSV",
+        data=csv_ringkasan,
+        file_name="ringkasan_ika.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
+
 # ============================================================
 # FOOTER
 # ============================================================
