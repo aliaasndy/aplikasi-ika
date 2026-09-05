@@ -1,4 +1,5 @@
 import streamlit as st
+st.write("VERSI BARU 05 SEPTEMBER 2026")
 import pandas as pd
 import math
 
