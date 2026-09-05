@@ -25,41 +25,40 @@ PARAMETER_DATA = {
     },
     "BOD": {
         "bobot": 0.132,
-        "deviasi": 3.64,
+        "deviasi": 2.0,
         "satuan": "mg/L",
     },
     "COD": {
         "bobot": 0.140,
-        "deviasi": 4.82,
+        "deviasi": 2.7,
         "satuan": "mg/L",
     },
     "TSS": {
         "bobot": 0.086,
-        "deviasi": 1.73,
+        "deviasi": 5.019,
         "satuan": "mg/L",
     },
     "DO": {
         "bobot": 0.167,
-        "deviasi": 10.0,
+        "deviasi": 0.6,
         "satuan": "mg/L",
     },
     "NO3-N": {
         "bobot": 0.081,
-        "deviasi": 5.0,
+        "deviasi": 0.0,
         "satuan": "mg/L",
     },
     "T-P": {
         "bobot": 0.100,
-        "deviasi": 0.384,
+        "deviasi": 0.042,
         "satuan": "mg/L",
     },
     "Fecal Coli": {
         "bobot": 0.157,
-        "deviasi": 10.0,
+        "deviasi": 231,
         "satuan": "MPN/100 mL",
     },
 }
-
 
 # ============================================================
 # FUNGSI MEMBATASI NILAI Q
