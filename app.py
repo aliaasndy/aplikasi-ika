@@ -835,18 +835,15 @@ hasil = []
 total_ika = 0
 
 for parameter in PARAMETER_DATA:
-
     x_asli = nilai_asli[parameter]
-
     deviasi = PARAMETER_DATA[parameter]["deviasi"]
-
     arah = arah_deviasi[parameter]
 
-        x_setelah_deviasi = terapkan_deviasi(
-            x_asli,
-            deviasi,
-            arah
-        )
+    x_setelah_deviasi = terapkan_deviasi(
+        x_asli,
+        deviasi,
+        arah
+    )
 
         # Nilai konsentrasi tidak dibuat negatif
         if x_setelah_deviasi < 0:
